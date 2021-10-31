@@ -94,7 +94,6 @@ pub struct Range {
     byte_end: usize,
 }
 
-
 #[derive(Clone, Debug)]
 pub struct ASTNode {
     pub kind: String,
@@ -137,6 +136,17 @@ fn json_from_ast(ast: &Rc<RefCell<ASTNode>>) -> serde_json::Map<String, serde_js
     map.insert("children".to_string(), serde_json::Value::Array(vec));
 
     map
+}
+
+#[get("/api/initial_code")]
+fn initial_code(global: &State<Arc<GlobalState>>) -> (Status, (ContentType, Vec<u8>)) {
+    let mut map = serde_json::Map::new();
+    let code = &*global.initial_code.lock().expect("can't lock code");
+    map.insert("code".to_string(), serde_json::Value::String(code.to_string()));
+    (
+        Status::Ok,
+        (ContentType::JSON, serde_json::to_vec(&map).unwrap()),
+    )
 }
 
 #[post("/api/update_code", format = "json", data = "<payload>")]
@@ -238,15 +248,16 @@ fn update_code(payload: Json<CodePayload>, global: &State<Arc<GlobalState>>) -> 
 }
 
 struct GlobalState {
-    language: Mutex<tree_sitter::Language>
+    language: Mutex<tree_sitter::Language>,
+    initial_code: Mutex<String>
 }
 
-pub async fn run(language: tree_sitter::Language) -> Result<(), rocket::Error> {
+pub async fn run(language: tree_sitter::Language, initial_code: &str) -> Result<(), rocket::Error> {
     println!("Tree-sitter viewer");
 
-    let global = Arc::new(GlobalState{language: Mutex::new(language)});
+    let global = Arc::new(GlobalState{language: Mutex::new(language), initial_code: Mutex::new(String::from(initial_code))});
 
-    let rocket = rocket::build().mount("/", routes![index, update_code]).manage(global);
+    let rocket = rocket::build().mount("/", routes![index, update_code, initial_code]).manage(global);
 
     let result = rocket.launch().await;
 

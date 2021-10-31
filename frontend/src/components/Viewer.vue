@@ -8,6 +8,7 @@
     <div ref="container" style="height: 50vh"></div>
     <div style="height: 50vh">
       <blocks-tree
+        v-if="treeData.kind"
         :data="treeData"
         :horizontal="treeOrientation == '1'"
         :collapsable="true"
@@ -68,10 +69,22 @@ export default {
   mounted: function () {
     this.$nextTick(function () {
       this.editor = monaco.editor.create(this.$refs["container"], {
-        value: 'void main() {\n printf("test");\n}\n',
         language: "cpp",
         theme: "vs-dark",
       });
+
+      (async () => {
+        const response = await fetch("/api/initial_code");
+        let json = await response.json();
+        console.log(json);
+
+        if (json.code) {
+          this.editor.setValue(json.code);
+          if (json.code.length > 0) {
+            this.updateCode();
+          }
+        }
+      })();
     });
   },
   methods: {
