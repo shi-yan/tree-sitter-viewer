@@ -31,8 +31,8 @@ async fn main() -> Result<(), rocket::Error> {
 
     // initial code to display
     let code = r#"void main() {
-    printf("test");
-}"#;
+        printf("test");
+    }"#;
 
     // specify the parser's language and the initial code.
     let result = tree_sitter_viewer::run(tree_sitter_cpp::language(), code );
@@ -41,3 +41,9 @@ async fn main() -> Result<(), rocket::Error> {
 }
 
 ```
+
+## label / legend explanation 
+
+* black/plain text: A tree node's [kind](https://docs.rs/tree-sitter/0.20.0/tree_sitter/struct.Node.html#method.kind) 
+* with green background: A tree node's [field_name](https://docs.rs/tree-sitter/0.20.0/tree_sitter/struct.TreeCursor.html#method.field_name), if there is one
+* pink, italic: the actual content of a node, only a leaf node / terminal will show this.
